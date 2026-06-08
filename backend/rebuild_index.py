@@ -6,7 +6,7 @@ from pathlib import Path
 from django.conf import settings
 
 from backend.rag_store import RagStore
-from backend.structure_chunker import process_document
+from backend.structure_chunker import process_document_detailed
 
 
 SKIP_NAME_MARKERS = {
@@ -27,11 +27,21 @@ def rebuild_from_uploads() -> dict:
     results = []
     for upload in selected:
         filename = original_filename(upload)
-        chunks = process_document(upload)
+        result = process_document_detailed(upload)
+        chunks = result.chunks
         document_id = store.add_document(filename, content_type_for(upload), chunks)
-        results.append({"document_id": document_id, "filename": filename, "chunks": len(chunks)})
+        results.append(
+            {
+                "document_id": document_id,
+                "filename": filename,
+                "chunks": len(chunks),
+                "storage": store.last_add_document_stats,
+                "pipeline": result.metadata,
+                "stages": result.stages,
+            }
+        )
 
-    return {"documents": results, "document_count": len(results)}
+    return {"documents": results, "document_count": len(results), "pipeline_version": "engineering-ingestion-v2"}
 
 
 def select_source_uploads(paths: list[Path]) -> list[Path]:

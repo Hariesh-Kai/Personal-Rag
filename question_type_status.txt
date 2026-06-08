@@ -1,0 +1,75 @@
+Engineering question type/template status
+
+Status basis
+
+This file tracks whether the question type classification and answer-template layer is code-written in the backend.
+The backend file is backend/question_types.py.
+
+Overall status: 100% code-written
+
+1. Direct fact questions: 100%
+2. Location / section questions: 100%
+3. Multi-part engineering questions: 100%
+4. Comparison questions: 100%
+5. Table / numeric questions: 100%
+6. Procedural questions: 100%
+7. Yes / No questions: 100%
+8. Safety-critical questions: 100%
+9. Explanation questions: 100%
+10. Search / discovery questions: 100%
+11. Conditional questions: 100%
+12. Exception questions: 100%
+13. Cross-section questions: 100%
+14. Document coverage questions: 100%
+15. Enumeration questions: 100%
+16. Identifier questions: 100%
+17. Negative / absence questions: 100%
+18. Ambiguous questions: 100%
+19. Follow-up questions: 100%
+20. Multi-constraint questions: 100%
+21. Out-of-document questions: 100%
+22. Safety interpretation questions: 100%
+23. Troubleshooting questions: 100%
+24. Meta / document questions: 100%
+25. Engineering decision questions: 100%
+26. Temporal / revision questions: 100%
+27. Conflict detection questions: 100%
+28. Multi-document questions: 100%
+29. Calculation questions: 100%
+30. Image / diagram questions: 100%
+31. Regulation / compliance questions: 100%
+32. Uncertainty / confidence questions: 100%
+33. Workflow questions: 100%
+34. Human language messiness questions: 100%
+35. False assumption questions: 100%
+36. Audit / traceability questions: 100%
+37. Partial match questions: 100%
+38. Knowledge gap questions: 100%
+39. Role-based questions: 100%
+40. Adversarial / stress questions: 100%
+
+Implemented code features
+
+- QuestionProfile dataclass
+- 40 question profiles
+- answer templates for all 40 profiles
+- retrieval strategy labels for all 40 profiles
+- risk levels for high-risk/critical categories
+- context limits per profile
+- exact-answer requirements where needed
+- citation requirements
+- inference control flags
+- keyword-based classifier
+- follow-up detection
+- multi-part detection
+- yes/no detection
+- messy-language fallback
+- prompt block builder for LLM grounding
+- profile payload for frontend/API diagnostics
+- routing integration through backend/retriever_router.py
+
+Important note
+
+This means the question-type/template layer is 100% code-written.
+It does not mean every possible user phrasing will classify perfectly.
+Answer quality still depends on retrieval quality, indexed document evidence, and the local LLM behavior.

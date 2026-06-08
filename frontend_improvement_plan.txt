@@ -1,0 +1,202 @@
+Frontend and chatbot experience improvement plan
+
+Goal
+
+Make the system feel like an enterprise engineering RAG assistant, not a generic chatbot.
+The frontend should expose backend grounding, retrieval, citation, and safety controls clearly.
+
+Core direction
+
+- Calm
+- Fast
+- Professional
+- Grounded
+- Traceable
+- Helpful
+- Concise
+- Engineering-focused
+- Confident only when evidence is strong
+
+Frontend improvements
+
+1. Retrieval transparency
+
+- Show detected question type.
+- Show active retrievers used for the answer.
+- Show retrieval quality score.
+- Show answer quality score.
+- Show grounding status.
+- Show hallucination/specificity warning when weak.
+- Show source count.
+- Show top document, section, and page where possible.
+
+2. Cleaner citation system
+
+- Replace "chunk" wording with user-friendly terms:
+  - Source
+  - Section
+  - Page
+  - Evidence
+  - Table
+  - Document
+- Show citations as [S1], [S2], [S3].
+- Each citation should expand into exact evidence.
+- Make table evidence visually distinct.
+- Show source metadata clearly.
+
+3. Expandable source evidence
+
+Each source should show:
+
+- Document name
+- Section title
+- Section number
+- Page number
+- Retrieval score
+- Why it was retrieved
+- Retriever used
+- Exact evidence text
+- Table rows if available
+- Metadata signals such as safety, numeric, ontology, graph, schema, or unit tags
+
+4. Not-found / insufficient-evidence UI
+
+- Clearly show when the backend does not have enough document evidence.
+- Avoid making weak answers look confident.
+- Add a visible state:
+  - Strong evidence
+  - Usable evidence
+  - Weak evidence
+  - Not enough document evidence
+- If evidence is weak, show a short explanation of what is missing.
+
+5. Copy buttons
+
+- Add copy answer button.
+- Add copy source/evidence button.
+- Add copy citation button.
+- Add copy full response with sources button.
+
+6. Timing and processing status
+
+- Show total response time.
+- Show retrieval time if backend provides it.
+- Show generation time if backend provides it.
+- Show processing stages:
+  - Classifying question
+  - Selecting retrievers
+  - Retrieving evidence
+  - Checking grounding
+  - Writing grounded answer
+
+7. Debug/details mode
+
+Normal employee view:
+
+- Clean answer
+- Clean sources
+- Confidence/evidence status
+
+Engineer/admin debug view:
+
+- Question profile
+- Retriever route
+- Active retrievers
+- Component scores
+- Rerank scores
+- Source metadata
+- Grounding evaluation
+- Hallucination/specificity evaluation
+- Context window details
+
+Chatbot feeling improvements
+
+1. Better conversation flow
+
+- Display user question and assistant answer clearly.
+- Keep answers readable and concise.
+- Show sources directly below the answer.
+- Keep technical details expandable, not always visible.
+
+2. Better loading states
+
+- Do not show a blank waiting state.
+- Show retrieval progress stages.
+- Use calm professional wording.
+- Avoid playful or casual loading messages.
+
+3. Evidence confidence feel
+
+- Strong evidence should feel trustworthy.
+- Weak evidence should visibly feel limited.
+- Not-found answers should feel intentional, not broken.
+
+4. Follow-up memory
+
+- Support follow-up questions like:
+  - "What about actuated valves?"
+  - "Explain that table."
+  - "Where is this mentioned?"
+- Show when the chatbot is using previous context.
+- Keep retrieval continuity visible in debug mode.
+
+5. Source-first user experience
+
+- Answer first.
+- Evidence one click away.
+- Sources should be easy to inspect.
+- Evidence should look official and traceable.
+
+6. Better empty and error states
+
+- If no documents are indexed, say so clearly.
+- If retrieval fails, say retrieval failed.
+- If evidence is weak, say evidence is weak.
+- If the answer is outside the document, say it is outside the indexed documents.
+
+7. Cleaner input area
+
+- Show indexed document count.
+- Show active index session.
+- Show upload/indexing status.
+- Add "Ask from documents only" mode.
+- Add current document scope if selected.
+
+Answer style improvements
+
+- Concise
+- Grounded
+- Engineering-focused
+- Direct
+- Traceable
+- No internet-style teaching
+- No unsupported external knowledge
+- Preserve shall/must wording
+- Preserve numeric values and units exactly
+- Use shorter answer when evidence is limited
+
+Priority order
+
+1. Source/citation UI
+2. Evidence confidence UI
+3. Retrieval transparency panel
+4. Copy buttons
+5. Loading/progress states
+6. Not-found/weak-evidence states
+7. Chat history and follow-up UX
+8. Admin/debug mode
+9. Document/index status panel
+10. Visual polish and layout refinement
+
+Final product feel
+
+The frontend should make the backend safety visible.
+The user should indirectly feel:
+
+- Retrieval found the right section.
+- Context was preserved.
+- The model stayed grounded.
+- Missing evidence is handled honestly.
+- Citations are trustworthy.
+- Numeric/table constraints are protected.
+- The assistant is professional, not speculative.

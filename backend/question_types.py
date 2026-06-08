@@ -166,7 +166,11 @@ def prompt_block(profile: QuestionProfile) -> str:
         f"Answer template: {profile.answer_template}\n"
         f"Retrieval expectation: {profile.retrieval_strategy}\n"
         f"{exact}\n"
-        f"{inference}"
+        f"{inference}\n"
+        "Style: concise, direct, engineering-focused, traceable, and document-grounded.\n"
+        "Do not use internet-style teaching, unsupported background, or broad explanation.\n"
+        "Preserve shall/must wording, numeric values, units, table rows, and exceptions exactly.\n"
+        "If evidence is limited, give a shorter answer or say Not found."
     )
 
 

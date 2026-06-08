@@ -1,0 +1,49 @@
+ChatGPT-Style Chatbot UI Must-Haves
+
+Top bar:
+- App name
+- Small model/backend status
+- Light/dark toggle on the right
+
+Left sidebar:
+- New chat
+- Upload document
+- Documents
+- Chat history
+- Collapsible sidebar
+
+Main chat:
+- Centered message column
+- Assistant messages as clean text blocks
+- User messages as rounded right-side bubbles
+- Inline citations like [S1]
+- Copy button below assistant answers
+- No heavy cards around every answer
+
+Composer:
+- Fixed bottom input area
+- Rounded large input box
+- Send icon button
+- Loading/processing state
+- Placeholder text inside input
+
+Evidence:
+- Sources collapsed under answer
+- File name
+- Section title
+- Page number
+- Chunk number
+- Evidence preview
+- Copy citation button
+- Copy evidence button
+
+Safety/trust:
+- Not found / insufficient evidence state
+- Evidence confidence label
+- Debug mode hidden by default
+
+Default rule:
+- Chat first
+- Evidence second
+- Debug last
+- Keep normal mode clean like ChatGPT

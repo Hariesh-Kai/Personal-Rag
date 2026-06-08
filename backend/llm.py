@@ -36,6 +36,10 @@ Use only the retrieved sources. Do not add external knowledge, best practices, a
 If the sources do not define or support the answer, say exactly: Not found in the retrieved document context.
 Prefer a shorter fully grounded answer over a broad answer.
 Preserve exact constraints, measurements, orientations, standards, exceptions, and negative requirements.
+Preserve shall/must/should wording exactly when it appears in the source.
+Preserve numeric values, units, directions, table values, and exceptions exactly.
+Answer directly. Do not include generic introductions such as "Based on the document" unless needed for clarity.
+Use 1-5 concise bullets or short sentences unless the question explicitly asks for a longer structured answer.
 Use bullets for requirements/lists, a short paragraph for definitions, and yes/no plus evidence for yes/no questions.
 Cite every factual sentence or bullet with source IDs like [S1]."""
 
@@ -90,12 +94,12 @@ class LocalLLM:
         )
         result = self._llm(
             prompt,
-            max_tokens=240,
+            max_tokens=180,
             temperature=0.05,
             repeat_penalty=1.08,
             stop=["<|im_end|>"],
         )
-        text = ensure_citation(result["choices"][0]["text"].strip(), contexts)
+        text = ensure_citation(clean_not_found_conflict(result["choices"][0]["text"].strip()), contexts)
         return {
             "answer": text,
             "mode": self.status,
@@ -183,7 +187,7 @@ class LocalLLM:
             if len(lines) == 3:
                 break
 
-        return "Based on the uploaded document:\n\n" + "\n".join(lines)
+        return "\n".join(lines)
 
 
 def _sources(contexts: list[dict]) -> list[dict]:
@@ -191,12 +195,25 @@ def _sources(contexts: list[dict]) -> list[dict]:
     for index, item in enumerate(contexts, start=1):
         metadata = item.get("metadata", {})
         preview_limit = 900 if metadata.get("contains_table") else 350
+        citation_id = f"S{index}"
+        section = metadata.get("section_title") or "No section"
+        table_title = metadata.get("table_title") or ""
+        page_label = page_locator(metadata)
+        source_kind = "table" if metadata.get("contains_table") else "text"
+        display_title = table_title or section
         sources.append(
             {
-                "citation_id": f"S{index}",
+                "citation_id": citation_id,
+                "citation_token": f"[{citation_id}]",
                 "filename": item["filename"],
                 "chunk_index": item["chunk_index"],
                 "score": round(float(item["score"]), 4),
+                "display_title": display_title,
+                "section_title": section,
+                "page_label": page_label,
+                "source_kind": source_kind,
+                "reference": citation_reference(citation_id, item, section, page_label, source_kind),
+                "debug": source_debug_payload(item),
                 "metadata": metadata,
                 "text": item["text"][:preview_limit],
             }
@@ -208,11 +225,88 @@ def source_label(item: dict) -> str:
     metadata = item.get("metadata") or {}
     section = metadata.get("section_title") or "no section"
     table_title = metadata.get("table_title") or ""
-    page_start = metadata.get("page_start")
-    page_end = metadata.get("page_end")
-    pages = f"p.{page_start}" if page_start == page_end else f"p.{page_start}-{page_end}"
+    pages = page_locator(metadata)
     table = f", table: {table_title}" if table_title else (", table" if metadata.get("contains_table") else "")
     return f"{section}, {pages}{table}"
+
+
+def page_locator(metadata: dict) -> str:
+    page_start = metadata.get("page_start")
+    page_end = metadata.get("page_end")
+    label_start = metadata.get("page_label_start")
+    label_end = metadata.get("page_label_end")
+    if label_start and label_end and label_start != label_end:
+        return f"pages {label_start}-{label_end}"
+    if label_start:
+        return f"page {label_start}"
+    if page_start and page_end and page_start != page_end:
+        return f"p.{page_start}-{page_end}"
+    if page_start:
+        return f"p.{page_start}"
+    return "page unknown"
+
+
+def citation_reference(citation_id: str, item: dict, section: str, page_label: str, source_kind: str) -> str:
+    filename = item.get("filename") or "unknown file"
+    chunk_index = item.get("chunk_index")
+    chunk = f"chunk {chunk_index}" if chunk_index is not None else "chunk unknown"
+    return f"[{citation_id}] {filename} | {section} | {page_label} | {chunk} | {source_kind}"
+
+
+def source_debug_payload(item: dict) -> dict:
+    score_keys = [
+        "score",
+        "vector_score",
+        "keyword_score",
+        "phrase_score",
+        "rerank_score",
+        "table_score",
+        "metadata_score",
+        "entity_score",
+        "self_query_score",
+        "multi_index_score",
+        "capability_score",
+        "knowledge_graph_score",
+        "graph_score",
+        "late_interaction_score",
+        "memory_score",
+        "sql_database_score",
+        "api_score",
+        "multi_hop_score",
+        "iterative_score",
+        "query_decomposition_score",
+        "ontology_score",
+        "symbolic_score",
+        "hierarchical_embedding_score",
+        "section_importance_score",
+        "document_classification_score",
+        "ingestion_quality_score",
+        "semantic_graph_score",
+        "tool_aware_score",
+    ]
+    plan_keys = [
+        "index_backend",
+        "self_query_match",
+        "hybrid_breakdown",
+        "graph_detail",
+        "late_interaction_detail",
+        "memory_detail",
+        "multi_hop_detail",
+        "iterative_detail",
+        "query_decomposition_detail",
+        "ontology_detail",
+        "symbolic_detail",
+        "semantic_graph_detail",
+        "tool_aware_detail",
+    ]
+    scores = {}
+    for key in score_keys:
+        if key in item and item.get(key) is not None:
+            scores[key] = round(float(item.get(key) or 0), 5)
+    return {
+        "scores": scores,
+        "details": {key: item.get(key) for key in plan_keys if item.get(key) not in (None, {}, [], "")},
+    }
 
 
 def select_context_window(question: str, contexts: list[dict], profile: QuestionProfile | None = None) -> list[dict]:
@@ -283,11 +377,35 @@ def retrieval_is_weak(question: str, contexts: list[dict]) -> bool:
 
 
 def ensure_citation(answer: str, contexts: list[dict]) -> str:
-    if not contexts or answer == "Not found in the retrieved document context.":
+    if is_not_found_text(answer):
+        return "Not found in the retrieved document context."
+    if not contexts:
         return answer
     if re.search(r"\[S\d+\]", answer):
         return answer
     return f"{answer} [S1]"
+
+
+def clean_not_found_conflict(answer: str) -> str:
+    not_found = "Not found in the retrieved document context."
+    if is_not_found_text(answer):
+        return not_found
+    lines = [line.rstrip() for line in answer.splitlines()]
+    factual_lines = [line for line in lines if line.strip() and not_found.lower() not in line.lower()]
+    if factual_lines:
+        return "\n".join(factual_lines).strip()
+    return answer.strip()
+
+
+def is_not_found_text(answer: str) -> bool:
+    normalized = re.sub(r"\[S\d+\]", "", str(answer or ""), flags=re.I)
+    normalized = " ".join(normalized.lower().strip().split())
+    return normalized in {
+        "not found",
+        "not found.",
+        "not found in the retrieved document context",
+        "not found in the retrieved document context.",
+    }
 
 
 def query_terms_for(question: str) -> set[str]:

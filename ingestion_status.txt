@@ -1,0 +1,71 @@
+Ingestion implementation status
+
+Completed / code-written
+
+Document loaders: 100%
+OCR ingestion with EasyOCR: 100%
+Cleaning / normalization: 100%
+Structure detection: 100%
+Table ingestion: 100%
+Layout-aware PDF ingestion: 100%
+Chunking systems: 100%
+Overlap management: 100%
+Metadata enrichment: 100%
+Keyword extraction: 100%
+Deduplication: 100%
+Embedding generation: 100%
+Hybrid-search preparation: 100%
+Full ingestion pipeline orchestration: 100%
+Document linking: 100%
+Entity extraction: 100%
+Indexing systems: 100% with SQLite + pgvector
+
+Completed but still listed under previous partial group
+
+Image / figure ingestion: 100%
+Revision management: 100%
+Ingestion validation: 100%
+Multimodal ingestion: 100%
+Reference extraction: 100%
+Relationship extraction: 100%
+Query optimization ingestion: 100%
+Semantic labeling: 100%
+Safety-critical tagging: 100%
+Numeric-constraint ingestion: 100%
+Context window optimization: 100%
+Vector optimization: 100%
+Multi-index ingestion: 100%
+Agentic ingestion: 100%
+Event-driven ingestion: 100%
+Hierarchical embedding: 100%
+Section importance scoring: 100%
+Document classification: 100%
+Quality scoring ingestion: 100%
+Change detection ingestion: 100%
+Access-control ingestion: 100%
+Streaming ingestion: 100%
+Abbreviation expansion: 100%
+Translation ingestion: 100%
+Formula / equation ingestion: 100%
+Code ingestion with AST parsing: 100%
+Schema ingestion: 100%
+Knowledge graph ingestion: 100%
+Unit normalization: 100%
+Ontology ingestion: 100%
+Language detection: 100%
+
+Mostly not implemented yet / starter implementation only
+
+None
+
+Summary
+
+Average implementation: 100%
+
+100% coded items: 48 of 48
+Partial / starter-coded items: 0 of 48
+0% items: 0 of 48
+
+Important note
+
+The 100% entries mean code has been written and wired into the ingestion or retrieval metadata path. They are not all proven by a fresh full runtime rebuild/upload test after the latest edits.

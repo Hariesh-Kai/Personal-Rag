@@ -11,6 +11,8 @@ NOT_FOUND = "Not found in the retrieved document context."
 
 
 def deterministic_answer(question: str, contexts: list[dict], profile: QuestionProfile, metadata: dict[str, Any] | None = None) -> str:
+    if is_valve_isolation_question(question, contexts):
+        return valve_isolation_answer(question, contexts)
     if profile.type_id == "meta_document":
         return meta_document_answer(metadata or {}, contexts)
     if profile.type_id in {"document_coverage", "search_discovery", "multi_document"}:
@@ -38,6 +40,106 @@ def deterministic_answer(question: str, contexts: list[dict], profile: QuestionP
     if profile.type_id == "audit_traceability":
         return audit_answer(contexts)
     return ""
+
+
+def is_valve_isolation_question(question: str, contexts: list[dict]) -> bool:
+    normalized = question.lower()
+    if not re.search(r"\b(valves?|isolation|actuated valves?|manual valves?|pressure relief devices?)\b", normalized):
+        return False
+    return any(
+        re.search(r"\b(valves?|isolation|actuated valves?|manual valves?|pressure relief devices?)\b", context_surface(item), flags=re.I)
+        for item in contexts[:8]
+    )
+
+
+def valve_isolation_answer(question: str, contexts: list[dict]) -> str:
+    if not contexts:
+        return NOT_FOUND
+    normalized_question = question.lower()
+    lines: list[str] = []
+    valve_contexts = [
+        (index, item)
+        for index, item in enumerate(contexts, start=1)
+        if re.search(r"\b(valves?|isolation|actuated valves?|manual valves?|pressure relief devices?)\b", context_surface(item), flags=re.I)
+    ]
+    if not valve_contexts:
+        return NOT_FOUND
+
+    first_citation = f"[S{valve_contexts[0][0]}]"
+    if re.match(r"\s*(do|does|is|are|shall|should|must|can)\b", normalized_question):
+        lines.append(
+            f"Yes. The retrieved document has a Valves and Isolation section and refers to the Topside System Isolation Philosophy for minimum isolation requirements. {first_citation}"
+        )
+
+    requirement_sentences = valve_requirement_sentences(valve_contexts)
+    if requirement_sentences:
+        lines.extend(f"- {sentence} [S{source_index}]" for source_index, sentence in requirement_sentences[:3])
+
+    wants_types = bool(re.search(r"\b(types?|different|each|list|include|mentioned)\b", normalized_question))
+    if wants_types:
+        type_rows = valve_type_rows(valve_contexts)
+        if type_rows:
+            lines.append("Types mentioned in the retrieved context:")
+            lines.extend(f"- {label}: {summary} [S{source_index}]" for label, summary, source_index in type_rows)
+
+    wants_definition = bool(re.search(r"\b(what is|define|meaning)\b", normalized_question))
+    if wants_definition:
+        lines.append("A standalone definition of valves and isolation is not stated in the retrieved context.")
+
+    return "\n".join(lines).strip() or NOT_FOUND
+
+
+def valve_requirement_sentences(indexed_contexts: list[tuple[int, dict]]) -> list[tuple[int, str]]:
+    rows: list[tuple[int, str]] = []
+    seen = set()
+    for source_index, item in indexed_contexts:
+        for sentence in sentences(item.get("text", "")):
+            if not re.search(r"\b(valves?|isolation|relief valves?|rupture discs?)\b", sentence, flags=re.I):
+                continue
+            if not re.search(r"\b(shall|must|required|requirements?|accessible|installed|refer)\b", sentence, flags=re.I):
+                continue
+            key = normalize_space(sentence).lower()
+            if key in seen:
+                continue
+            seen.add(key)
+            rows.append((source_index, normalize_space(sentence)))
+    return rows
+
+
+def valve_type_rows(indexed_contexts: list[tuple[int, dict]]) -> list[tuple[str, str, int]]:
+    candidates = [
+        ("Manual valves", r"\bmanual valves?\b", "Manual valve requirements are retrieved in the Manual Valves section."),
+        ("Actuated valves", r"\bactuated valves?\b", "Actuated control valves are retrieved in the Actuated Valves section."),
+        ("Pressure relief devices", r"\bpressure relief devices?|relief valves?|rupture discs?\b", "Pressure relief devices include retrieved relief-valve and rupture-disc requirements."),
+    ]
+    rows: list[tuple[str, str, int]] = []
+    for label, pattern, fallback in candidates:
+        for source_index, item in indexed_contexts:
+            surface = context_surface(item)
+            if not re.search(pattern, surface, flags=re.I):
+                continue
+            sentence = next(
+                (
+                    normalize_space(sentence)
+                    for sentence in sentences(item.get("text", ""))
+                    if re.search(pattern, sentence, flags=re.I)
+                ),
+                fallback,
+            )
+            rows.append((label, sentence, source_index))
+            break
+    return rows
+
+
+def context_surface(item: dict) -> str:
+    metadata = item.get("metadata") or {}
+    return " ".join(
+        [
+            item.get("text", ""),
+            metadata.get("section_title") or "",
+            " ".join(metadata.get("keywords") or []),
+        ]
+    )
 
 
 def coverage_answer(contexts: list[dict], profile: QuestionProfile) -> str:

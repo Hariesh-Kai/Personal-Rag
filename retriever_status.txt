@@ -1,0 +1,54 @@
+Retriever implementation status
+
+1. Semantic / Vector Retriever: 100%
+2. Keyword Retriever: 100%
+3. Hybrid Retriever: 100%
+4. Table Retriever: 100%
+5. Metadata Retriever: 100%
+6. Reranker Retriever: 100%
+7. Window Retriever: 100%
+8. Parent-child Retriever: 100%
+9. Hierarchical Retriever: 100%
+10. Multi-query Retriever: 100%
+11. Self-query Retriever: 100%
+12. Contextual Compression Retriever: 100%
+13. Query Router Retriever: 100%
+14. Multimodal Retriever: 100%
+15. Agentic Retriever: 100%
+16. Graph Retriever: 100%
+17. Knowledge Graph Retriever: 100%
+18. Dense Passage Retriever / DPR: 100%
+19. Sparse Retriever: 100%
+20. Late Interaction Retriever: 100%
+21. Memory Retriever: 100%
+22. Time-aware Retriever: 100%
+23. Citation Retriever: 100%
+24. SQL / Database Retriever: 100%
+25. API Retriever: 100%
+26. Multi-hop Retriever: 100%
+27. Iterative Retriever: 100%
+28. Query-decomposition Retriever: 100%
+29. Tool-aware Retriever: 100%
+30. Cache Retriever: 100%
+31. Multi-vector Retriever: 100%
+32. Section-aware Retriever: 100%
+33. Entity Retriever: 100%
+34. Ontology Retriever: 100%
+35. Symbolic Retriever: 100%
+36. Semantic Graph Retriever: 100%
+37. Document Map Retriever: 100%
+38. Layout-aware Retriever: 100%
+39. Image Region Retriever: 100%
+40. Retriever Routing System: 100%
+
+Summary
+
+Average implementation: 100%
+
+Fully implemented / code-real: 40 of 40
+Partially implemented / approximation: 0 of 40
+Mostly not implemented: 0 of 40
+
+Notes
+
+API Retriever is code-real with a guarded allowlisted HTTP connector. It reads configured endpoints from RAG_API_RETRIEVER_ENDPOINTS, restricts calls by RAG_API_ALLOWED_HOSTS, normalizes JSON/text responses into evidence rows, and scores API results without inventing live data when no endpoint is configured. Graph Retriever is code-real with local entity-edge graph seed nodes, multi-hop graph expansion, edge evidence, chunk-distance scoring, and graph-neighbor candidate expansion. Agentic Retriever is code-real with optional CrewAI planning and deterministic fallback. Knowledge Graph Retriever is code-real with a local entity-relation graph over chunks, sections, documents, standards, and references. Late Interaction Retriever is code-real with token-level max-sim scoring for exact terms, identifiers, numeric values, stems, fuzzy matches, and character n-grams. Memory Retriever is code-real with chat-history source memory, follow-up expansion, previous source IDs, sections, entities, and standards. SQL / Database Retriever is code-real with safe parameterized SQLite retrieval over documents, chunks, metadata, retrieval logs, and chat history. Multi-hop Retriever is code-real with staged hop planning, hop query expansion, per-hop scoring, linked chunk expansion, section sibling expansion, and relationship evidence. Iterative Retriever is code-real with first-pass analysis, missing-term detection, focused retry queries, candidate merging, and iterative rescoring. Query-decomposition Retriever is code-real with typed subquestion parsing, query expansion, and per-subquestion coverage scoring. Tool-aware Retriever is code-real with a local tool planner that selects vector, keyword, table, SQL, graph, memory, iterative, multimodal, citation, API, and late-interaction retrieval behavior, then expands queries and rescoring candidates. Ontology Retriever is code-real with a local engineering ontology, concept detection, synonym/broader/related-term expansion, metadata matching, and candidate rescoring. Symbolic Retriever is code-real with a local rule engine for obligations, prohibitions, conditions, exceptions, permissions, recommendations, definitions, numeric constraints, and safety-critical wording. Semantic Graph Retriever is code-real with dense/vector relevance fused with knowledge-graph nodes, ontology concepts, relationship types, section links, and lexical query terms.
