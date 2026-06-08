@@ -37,6 +37,7 @@ function App() {
   const [chatSessions, setChatSessions] = useState([]);
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [progress, setProgress] = useState({ value: 0, stage: "Waiting for upload" });
+  const [showUploadProgress, setShowUploadProgress] = useState(false);
   const [messages, setMessages] = useState([]);
   const [question, setQuestion] = useState("");
   const [busy, setBusy] = useState(false);
@@ -101,6 +102,7 @@ function App() {
     const form = new FormData();
     form.append("file", file);
     form.append("new_session", "true");
+    setShowUploadProgress(true);
     setProgress({ value: 2, stage: "uploading" });
     const result = await api("/api/upload", { method: "POST", body: form });
     pollProgress(result.job_id);
@@ -440,6 +442,7 @@ function App() {
           <div className="input-scope">
             <span>{documentCount} documents</span>
             <span>{chunkCount} chunks</span>
+            {showUploadProgress && (
             <div className="composer-progress">
               <div className="progress-label">
                 <span>{progress.stage}</span>
@@ -449,6 +452,7 @@ function App() {
                 <div className="progress-bar" style={{ width: `${Math.round(progress.value)}%` }} />
               </div>
             </div>
+            )}
           </div>
         </div>
       </section>
