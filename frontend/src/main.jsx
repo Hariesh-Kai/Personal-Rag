@@ -18,6 +18,7 @@ import {
   Sun,
   ArrowUp,
 } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 import "./styles.css";
 
 async function api(path, options = {}) {
@@ -40,6 +41,8 @@ function App() {
   const [showUploadProgress, setShowUploadProgress] = useState(false);
   const [messages, setMessages] = useState([]);
   const [question, setQuestion] = useState("");
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [draftQuestion, setDraftQuestion] = useState("");
   const [busy, setBusy] = useState(false);
   const [copiedKey, setCopiedKey] = useState("");
   const [processingStartedAt, setProcessingStartedAt] = useState(null);
@@ -120,14 +123,17 @@ function App() {
             makeMessage("assistant", `Processed ${job.filename}: ${job.chunk_count} chunks stored.`),
           ]);
           await refreshAll(job.document_id);
+          window.setTimeout(() => setShowUploadProgress(false), 2500);
         }
         if (job.status === "error") {
           window.clearInterval(timer);
           setMessages((items) => [...items, makeMessage("assistant", `Upload failed: ${job.error}`)]);
+          window.setTimeout(() => setShowUploadProgress(false), 3000);
         }
       } catch (error) {
         window.clearInterval(timer);
         setMessages((items) => [...items, makeMessage("assistant", error.message)]);
+        window.setTimeout(() => setShowUploadProgress(false), 3000);
       }
     }, 450);
   }
@@ -160,6 +166,8 @@ function App() {
     event.preventDefault();
     const trimmed = question.trim();
     if (!trimmed || busy) return;
+    setHistoryIndex(-1);
+    setDraftQuestion("");
     if (documentCount === 0) {
       setMessages((items) => [
         ...items,
@@ -216,6 +224,8 @@ function App() {
     setMessages([]);
     setActiveSessionId(null);
     setQuestion("");
+    setHistoryIndex(-1);
+    setDraftQuestion("");
     setCopiedKey("");
     setProcessingElapsedMs(0);
     setActiveView("chat");
@@ -227,6 +237,8 @@ function App() {
     setActiveSessionId(session.id);
     setMessages(messagesFromSession(session));
     setQuestion("");
+    setHistoryIndex(-1);
+    setDraftQuestion("");
     setCopiedKey("");
     setProcessingElapsedMs(0);
     setActiveView("chat");
@@ -332,7 +344,8 @@ function App() {
             <span>{health?.ok ? "Backend online" : "Checking backend"}</span>
           </div>
         </div>
-        <div className="messages" ref={messagesRef}>
+        <div className="messages-viewport" ref={messagesRef}>
+          <div className="messages">
           {messages.map((message, index) => {
             const insufficient = message.role === "assistant" && isInsufficientEvidence(message);
             return (
@@ -342,32 +355,12 @@ function App() {
               >
                 {insufficient && <InsufficientEvidenceNotice message={message} />}
                 <AnswerText text={message.text} sources={message.sources || []} />
-                {message.role === "assistant" && !insufficient && (message.confidence || message.retrieval) && (
-                  <ConfidenceBadge confidence={message.confidence || {}} retrieval={message.retrieval || {}} />
-                )}
+                
                 {debugMode && message.retrieval && <RetrievalTransparency retrieval={message.retrieval} />}
-                {!!message.sources?.length && (
-                  <details className="sources-dropdown">
-                    <summary>Sources ({message.sources.length})</summary>
-                    <div className="sources">
-                      {message.sources.map((source, sourceIndex) => (
-                        <SourceCard
-                          key={`${source.filename}-${source.chunk_index}-${sourceIndex}`}
-                          source={source}
-                          fallbackId={`S${sourceIndex + 1}`}
-                          citationCopied={copiedKey === citationCopyKey(source, sourceIndex)}
-                          evidenceCopied={copiedKey === evidenceCopyKey(source, sourceIndex)}
-                          onCopyCitation={() => copyCitation(source, citationCopyKey(source, sourceIndex))}
-                          onCopyEvidence={() => copySourceEvidence(source, evidenceCopyKey(source, sourceIndex))}
-                          debugMode={debugMode}
-                        />
-                      ))}
-                    </div>
-                  </details>
-                )}
                 {debugMode && <DebugDetails message={message} />}
                 {debugMode && message.retrieverRoute && <RetrieverRoute route={message.retrieverRoute} />}
                 {debugMode && message.quality && <QualityReport quality={message.quality} />}
+                
                 {message.role === "assistant" && (
                   <div className="message-footer assistant-actions">
                     <span>{formatTime(message.createdAt)}</span>
@@ -391,6 +384,32 @@ function App() {
                     </button>
                     {copiedKey === (message.id || `${message.role}-${index}`) && <span>Copied</span>}
                     {copiedKey === fullResponseCopyKey(message, index) && <span>Full response copied</span>}
+
+                    {!insufficient && (message.confidence || message.retrieval) && (
+                      <ConfidenceBadge confidence={message.confidence || {}} retrieval={message.retrieval || {}} />
+                    )}
+                    
+                    {!!message.sources?.length && (
+                      <details className="sources-dropdown">
+                        <summary>Sources ({message.sources.length})</summary>
+                        <div className="sources">
+                          {message.sources.map((source, sourceIndex) => (
+                            <SourceCard
+                              key={`${source.filename}-${source.chunk_index}-${sourceIndex}`}
+                              source={source}
+                              fallbackId={`S${sourceIndex + 1}`}
+                              citationCopied={copiedKey === citationCopyKey(source, sourceIndex)}
+                              evidenceCopied={copiedKey === evidenceCopyKey(source, sourceIndex)}
+                              onCopyCitation={() => copyCitation(source, citationCopyKey(source, sourceIndex))}
+                              onCopyEvidence={() => copySourceEvidence(source, evidenceCopyKey(source, sourceIndex))}
+                              debugMode={debugMode}
+                            />
+                          ))}
+                        </div>
+                      </details>
+                    )}
+
+                    <div style={{ flexGrow: 1 }} />
                   </div>
                 )}
               </article>
@@ -404,6 +423,7 @@ function App() {
               </div>
             </article>
           )}
+          </div>
         </div>
         <div className={`input-area${messages.length === 0 && !busy ? " centered-composer" : ""}`}>
           {messages.length === 0 && !busy && (
@@ -425,7 +445,45 @@ function App() {
             </button>
             <input
               value={question}
-              onChange={(event) => setQuestion(event.target.value)}
+              onChange={(event) => {
+                setQuestion(event.target.value);
+                setHistoryIndex(-1);
+                setDraftQuestion(event.target.value);
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                  if (e.target.selectionStart !== e.target.selectionEnd) return;
+                  if (e.target.selectionStart > 0 && e.target.selectionStart < e.target.value.length) return;
+                  
+                  const userQuestions = messages.filter(m => m.role === "user").map(m => m.text);
+                  if (userQuestions.length === 0) return;
+
+                  e.preventDefault();
+
+                  if (e.key === "ArrowUp") {
+                    if (historyIndex === -1) {
+                      const nextIndex = userQuestions.length - 1;
+                      setHistoryIndex(nextIndex);
+                      setQuestion(userQuestions[nextIndex]);
+                    } else if (historyIndex > 0) {
+                      const nextIndex = historyIndex - 1;
+                      setHistoryIndex(nextIndex);
+                      setQuestion(userQuestions[nextIndex]);
+                    }
+                  } else if (e.key === "ArrowDown") {
+                    if (historyIndex !== -1) {
+                      if (historyIndex < userQuestions.length - 1) {
+                        const nextIndex = historyIndex + 1;
+                        setHistoryIndex(nextIndex);
+                        setQuestion(userQuestions[nextIndex]);
+                      } else {
+                        setHistoryIndex(-1);
+                        setQuestion(draftQuestion);
+                      }
+                    }
+                  }
+                }
+              }}
               placeholder={documentCount ? "Message RAG Chat..." : "Upload a document before asking..."}
               autoComplete="off"
               disabled={busy}
@@ -813,21 +871,16 @@ function DebugField({ label, value }) {
   );
 }
 
-function AnswerText({ text, sources }) {
-  const sourceMap = new Map((sources || []).map((source) => [source.citation_token || `[${source.citation_id}]`, source]));
-  const parts = String(text || "").split(/(\[S\d+\])/g);
+function AnswerText({ text }) {
+  // Completely strip out [S1], [S1, S2], or [S1 | verbose text]
+  const cleanedText = String(text || "").replace(/\[S\d+[^\]]*\]/g, "").trim();
+
   return (
-    <p className="answer-text">
-      {parts.map((part, index) => {
-        const source = sourceMap.get(part);
-        if (!source) return <React.Fragment key={`${part}-${index}`}>{part}</React.Fragment>;
-        return (
-          <span className="inline-citation" title={citationReference(source)} key={`${part}-${index}`}>
-            {part}
-          </span>
-        );
-      })}
-    </p>
+    <div className="answer-text markdown-body">
+      <ReactMarkdown>
+        {cleanedText}
+      </ReactMarkdown>
+    </div>
   );
 }
 

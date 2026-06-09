@@ -70,7 +70,25 @@ def evaluate_answer(question: str, answer: str, contexts: list[dict[str, Any]], 
         "retrieval_quality": retrieval,
         "question_type_fit": type_fit,
     }
-    overall = round(sum(check["score"] for check in checks.values()) / len(checks), 3)
+    
+    # Enforce strict 80/20 (10/10) metric in code
+    document_score = (
+        grounding["score"] + 
+        hallucination["score"] + 
+        specificity["score"] + 
+        context["score"] + 
+        retrieval["score"]
+    ) / 5.0
+
+    docu_gen_score = (
+        type_fit["score"] + 
+        over_generation["score"]
+    ) / 2.0
+
+    llm_style_score = style["score"]
+
+    # 80% Document Base, 10% Docu-Gen, 10% LLM Style
+    overall = round((document_score * 0.80) + (docu_gen_score * 0.10) + (llm_style_score * 0.10), 3)
     return {
         "overall_score": overall,
         "grade": grade(overall),

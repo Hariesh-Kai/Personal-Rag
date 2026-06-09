@@ -190,7 +190,7 @@ class PgVectorIndex:
                                 table_text, metadata_text, numeric_text, entity_text, citation_text,
                                 index_payload, created_at
                             )
-                            VALUES (%s, %s, %s, %s, %s, %s, %s::vector, %s::jsonb, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s::vector, %s::jsonb, %s, %s, %s, %s, %s, %s, %s, %s, %s::jsonb, %s)
                             ON CONFLICT(index_session, document_id, chunk_index)
                             DO UPDATE SET
                                 sqlite_chunk_id = EXCLUDED.sqlite_chunk_id,
